@@ -90,6 +90,16 @@ class MovementController {
         const deletedMovement = await MovementProvider.deleteMovement(id);
         ResponseHandler.success(res, deletedMovement, 'Movement deleted successfully');
     }
+
+    public async getBalance(req: Request, res: Response) {
+        try {
+            const totalCents = await MovementProvider.getBalance();
+            const formattedBalance = formatAmount(totalCents);
+            ResponseHandler.success(res, { balance: formattedBalance }, 'Balance calculated successfully');
+        } catch (error) {
+            ResponseHandler.serverError(res, error, 'Error calculating balance');
+        }
+    }
 }
 
 export default new MovementController();

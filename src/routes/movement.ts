@@ -9,5 +9,6 @@ routesMovement.get('/', MovementController.getMovements);
 routesMovement.post('/filter', MovementController.filterMovements);
 routesMovement.put('/:id', MovementController.updateMovement);
 routesMovement.delete('/:id', MovementController.deleteMovement);
+routesMovement.get('/balance', MovementController.getBalance);
 
 export default routesMovement;

@@ -44,6 +44,11 @@ class MovementProvider {
     public async deleteMovement(id: string): Promise<number> {
         return await MovementModel.destroy({ where: { id } });
     }
+
+    public async getBalance(): Promise<number> {
+        const result = await MovementModel.sum('amount');
+        return result || 0; // Retornamos 0 si no hay movimientos
+    }
 }
 
 export default new MovementProvider();
