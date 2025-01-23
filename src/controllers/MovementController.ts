@@ -6,10 +6,34 @@ import { z } from 'zod';
 
 const MovementSchema = z.object({
     description: z.string().optional(),
-    amount: z.number(),
+    amount: z.string()
+        .transform((val) => {
+            // Eliminar el símbolo de menos si existe, lo agregaremos después
+            const isNegative = val.startsWith('-');
+            const cleanVal = val.replace('-', '');
+            
+            // Reemplazar la coma por punto para el parsing
+            const normalized = cleanVal.replace(',', '.');
+            
+            // Multiplicar por 100 para convertir a centavos y redondear
+            const cents = Math.round(parseFloat(normalized) * 100);
+            
+            // Devolver el valor negativo si corresponde
+            return isNegative ? -cents : cents;
+        }),
     date: z.string().or(z.date()).transform(val => new Date(val)),
     origin: z.string()
 });
+
+// Función de utilidad para transformar centavos a string con formato
+const formatAmount = (cents: number): string => {
+    const isNegative = cents < 0;
+    const absoluteCents = Math.abs(cents);
+    const euros = Math.floor(absoluteCents / 100);
+    const remainingCents = absoluteCents % 100;
+    const formattedCents = remainingCents.toString().padStart(2, '0');
+    return `${isNegative ? '-' : ''}${euros},${formattedCents}`;
+};
 
 class MovementController {
 
@@ -25,7 +49,14 @@ class MovementController {
 
     public async getMovements(req: Request, res: Response) {
         const movements = await MovementProvider.getMovements();
-        ResponseHandler.success(res, movements, 'Movements fetched successfully');
+        const formattedMovements = {
+            rows: movements.rows.map(mov => ({
+                ...mov.toJSON(),
+                amount: formatAmount(mov.amount)
+            })),
+            count: movements.count
+        };
+        ResponseHandler.success(res, formattedMovements, 'Movements fetched successfully');
     }
 
     public async filterMovements(req: Request, res: Response) {
@@ -37,7 +68,11 @@ class MovementController {
             };
             
             const filteredMovements = await MovementProvider.filterMovements(filter);
-            ResponseHandler.success(res, filteredMovements, 'Movements filtered successfully');
+            const formattedMovements = filteredMovements.map(mov => ({
+                ...mov.toJSON(),
+                amount: formatAmount(mov.amount)
+            }));
+            ResponseHandler.success(res, formattedMovements, 'Movements filtered successfully');
         } catch (error) {
             ResponseHandler.badRequestError(res, error, 'Invalid date format');
         }
