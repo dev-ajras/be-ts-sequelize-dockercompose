@@ -79,10 +79,14 @@ class MovementController {
     }
 
     public async updateMovement(req: Request, res: Response) {
-        const id: string = req.params.id;
-        const movement: Movement = req.body;
-        const updatedMovement = await MovementProvider.updateMovement(id, movement);
-        ResponseHandler.success(res, updatedMovement, 'Movement updated successfully');
+        try {
+            const id: string = req.params.id;
+            const validatedData = MovementSchema.parse(req.body);
+            const updatedMovement = await MovementProvider.updateMovement(id, validatedData);
+            ResponseHandler.success(res, updatedMovement, 'Movement updated successfully');
+        } catch (error) {
+            ResponseHandler.badRequestError(res, error, 'Invalid movement data');
+        }
     }
 
     public async deleteMovement(req: Request, res: Response) {
